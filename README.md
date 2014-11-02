@@ -1,3 +1,5 @@
+# This gem is not ready yet. Just a gem stub at this point.
+
 # Freighter
 
 TODO: Write a gem description
