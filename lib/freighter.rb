@@ -1,7 +1,11 @@
 require "freighter/version"
 require "freighter/logger"
 require "freighter/parse"
+require "freighter/trailer"
 
 module Freighter
-  # Your code goes here...
+  class Tractor
+    def initalize()
+    end
+  end
 end
