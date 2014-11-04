@@ -15,7 +15,7 @@ module Freighter
     end
 
     def config_error(str)
-      error "Config error: #{str}"
+      error "Config error: #{str} not defined"
     end
 
     def error(str)

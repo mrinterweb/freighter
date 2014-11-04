@@ -3,13 +3,14 @@ module Freighter
     attr_reader :logger, :config
 
     def initialize
-      @logger = LOGGER
       Parse.new OPTIONS.config_path
+      @logger = LOGGER
       @config = OPTIONS.config
+      @connection_config = @config.fetch('connection')
+      environments = @config.fetch('environments')
+      @environment = environments.fetch(OPTIONS.environment) rescue logger.config_error("environments/#{OPTIONS.environment}")
 
-      connection = config.fetch('connection') rescue logger.error("connection not defined")
-      connection_type = connection.fetch('type') rescue logger.config_error("connection type not defined")
-
+      connection_type = @connection_config['type']
       case connection_type
       when 'ssh'
         deploy_with_ssh
@@ -19,9 +20,14 @@ module Freighter
     end
 
     def deploy_with_ssh
-      ssh = SSH.new(config)
-      ssh.proxy do
-        puts "Fantastic"
+      ssh_options = @connection_config.fetch('ssh_options')
+      ssh_options.extend Helpers::Hash
+      ssh_options = ssh_options.symbolize_keys
+      @environment.fetch('hosts').each do |host|
+        ssh = SSH.new(host, ssh_options)
+        ssh.start do |shell|
+          puts shell.exec! 'ls -l'
+        end
       end
     end
 

@@ -17,11 +17,15 @@ end
 OptionParser.new do |opts|
   opts.banner = "Usage: freigter [options] (deploy)"
 
+  opts.on('-e ENV', 'environment * required') do |env|
+    options.environment = env
+  end
+
   opts.on('-v', '--verbose', 'verbose logging') do |v|
     options.verbose = true
   end
 
-  opts.on('-c', '--config PATH', 'path to yml config') do |opt|
+  opts.on('-c', '--config PATH', 'path to yml config. Default is ./config/freighter.yml') do |opt|
     if opt
       options.config_path = opt
     elsif defiend?(Rails) && Rails.root
@@ -29,6 +33,10 @@ OptionParser.new do |opts|
     end
   end
 end.parse!
+
+unless options.environment
+  logger.error "Must specify an environment with the -e option"
+end
 
 # todo - brush up on nautical jargon to find a better way of saying the freighter is to depart
 logger.info "All hand on deck. Toot toot."
