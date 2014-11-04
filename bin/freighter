@@ -34,9 +34,6 @@ OptionParser.new do |opts|
   end
 end.parse!
 
-unless options.environment
-  logger.error "Must specify an environment with the -e option"
-end
 
 # todo - brush up on nautical jargon to find a better way of saying the freighter is to depart
 logger.info "All hand on deck. Toot toot."
@@ -44,7 +41,22 @@ logger.debug "app is chatty"
 
 case ARGV[0]
 when "deploy"
+  logger.error "Must specify an environment with the -e option" unless options.environment
   Freighter::Deploy.new
+when "config"
+  if File.exist?('./config/freighter.yml')
+    logger.info "./config/freighter.yml already exists"
+  else
+    example_path = File.expand_path('../../config/freighter.example.yml', __FILE__)
+    begin
+      FileUtils.mkdir('config')
+    rescue Errno::EEXIST
+    end
+    FileUtils.cp(example_path, 'config/freighter.yml')
+    logger.info "Example configuration copied to ./config/freighter.yml"
+    logger.info "Edit the file with your configuration."
+    logger.info "Please remember to prefer to use ENV vars instead of passwords when editing the configuration."
+  end
 else
   logger.error "unexpected command given: #{ARGV[0]}. See usage. freighter --help"
 end
