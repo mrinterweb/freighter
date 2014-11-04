@@ -15,7 +15,7 @@ else
 end
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: freigter [options] (deploy)"
+  opts.banner = "Usage: freigter [options] (deploy|configure)"
 
   opts.on('-e ENV', 'environment * required') do |env|
     options.environment = env
@@ -43,7 +43,7 @@ case ARGV[0]
 when "deploy"
   logger.error "Must specify an environment with the -e option" unless options.environment
   Freighter::Deploy.new
-when "config"
+when "configure"
   if File.exist?('./config/freighter.yml')
     logger.info "./config/freighter.yml already exists"
   else
