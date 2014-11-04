@@ -1,17 +1,15 @@
 require 'yaml'
-require 'pry'
-require 'freighter/logger'
 
 module Freighter
   class Parse
-    def initialize(options)
-      @logger = Logger.new options
-      @config_path = options.config_path
+    def initialize(config_path)
       begin
-        @config = YAML.load_file(@config_path)
-        @logger.log "config file parsed", :verbose
+        OPTIONS.config = YAML.load_file(config_path)
+        LOGGER.debug "config file parsed"
       rescue Errno::ENOENT => e
-        @logger.error "Error parsing freighter config file.\n  path: #{@config_path}\n  #{e}"
+        LOGGER.error "Error parsing freighter config file.\n  path: #{config_path}\n  #{e}"
+      rescue
+        LOGGER.error "There is something wrong with the path to your yaml config file: #{config_path}\n  #{$!.message}"
       end
     end
   end

@@ -1,11 +1,15 @@
-require "freighter/version"
-require "freighter/logger"
-require "freighter/parse"
-require "freighter/trailer"
+Dir[File.join(File.dirname(__FILE__), 'freighter', '*')].each do |file|
+  require file
+end
+require 'ostruct'
 
 module Freighter
-  class Tractor
-    def initalize()
-    end
-  end
+
+  def self.options; OPTIONS end
+  def self.logger; LOGGER end
+
+  OPTIONS = OpenStruct.new
+  LOGGER  = Logger.new
+
 end
+

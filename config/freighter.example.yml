@@ -1,0 +1,14 @@
+connection:
+  type: ssh
+  ssh_options:
+    user_name: user name on host
+    keys:
+      - "~/.config/id_rsa"
+
+environments:
+  staging:
+    hosts:
+      - staging.example.com
+  production:
+    hosts:
+      - example.com

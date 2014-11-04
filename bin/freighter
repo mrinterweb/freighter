@@ -2,45 +2,42 @@
 
 require 'optparse'
 require 'bundler/setup'
-require 'ostruct'
 require 'freighter'
 require 'pry'
 
-@options = OpenStruct.new
+options = Freighter.options
+logger  = Freighter.logger
 
 if defined?(Rails)
-  @options.config_path = "#{Rails.root}/config/freighter.yml" 
+  options.config_path = "#{Rails.root}/config/freighter.yml" 
 else
-  @options.config_path = "./config/freighter.yml" 
+  options.config_path = "./config/freighter.yml" 
 end
 
 OptionParser.new do |opts|
   opts.banner = "Usage: freigter [options] (deploy)"
 
   opts.on('-v', '--verbose', 'verbose logging') do |v|
-    @options.verbose = true
+    options.verbose = true
   end
 
-  opts.on('-c', '--config', 'path to yml config') do |opt|
+  opts.on('-c', '--config PATH', 'path to yml config') do |opt|
     if opt
-      @options.config_path = opt
+      options.config_path = opt
     elsif defiend?(Rails) && Rails.root
-      @options.config_path = "#{Rails.root}/config/freighter.yml"
+      options.config_path = "#{Rails.root}/config/freighter.yml"
     end
   end
 end.parse!
 
-logger = Freighter::Logger.new(@options)
-
+# todo - brush up on nautical jargon to find a better way of saying the freighter is to depart
 logger.info "All hand on deck. Toot toot."
 logger.debug "app is chatty"
 
-config = Freighter::Parse.new(@options)
-
 case ARGV[0]
 when "deploy"
-  :deploy
+  Freighter::Deploy.new
 else
-  logger.error "unexpected command given: #{ARGV[0]}. See usage. freighter --help", :error
+  logger.error "unexpected command given: #{ARGV[0]}. See usage. freighter --help"
 end
 
