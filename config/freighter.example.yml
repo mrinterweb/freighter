@@ -5,10 +5,17 @@ connection:
     keys:
       - "~/.config/id_rsa"
 
+docker:
+  port: 2375
+
 environments:
   staging:
     hosts:
-      - staging.example.com
+      - host: staging.example.com
+        images:
+          - organization/imageName:latest
   production:
     hosts:
-      - example.com
+      - host: example.com
+        images:
+          - organization/imageName:latest
