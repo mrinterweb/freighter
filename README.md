@@ -70,6 +70,10 @@ Example of how to deploy:
 ./bin/freighter -e staging deloy
 ```
 
+## Fun facts
+
+If you find yourself in a pickle of not being able to Ctrl+c (interupt) the command. Ctrl+z (suspend) the process and the kill the pid with `kill -6 <pid>`. I'll try to fix it so that this scenario is more avoidable.
+
 ## TODO
 * Write some tests. This has been put off since it is tricky to write tests against remote services.
 * Finish usage documentation
