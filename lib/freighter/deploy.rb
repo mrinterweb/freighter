@@ -31,20 +31,25 @@ module Freighter
         docker_api = DockerRestAPI.new("http://localhost:#{port}")
 
         ssh.tunneled_proxy(port) do |session|
-          set_docker_url(port)
+          setup_docker_client(port)
+
+          # pull the latest image
+          # Docker::Image.create 'fromImage' => 'org/image:latest'
           binding.pry
         end
       end
     end
 
-    def set_docker_url(port)
+    def setup_docker_client(port)
       Docker.url = "http://localhost:#{port}"
+      
       # check docker connection
       begin
         logger.debug "Requesting docker version"
         # excon = Excon.new "http://localhost:#{port}"
         # response = excon.get path: '/containers/json'
         response = Docker.version
+        Docker.authenticate!('username' => ENV['DOCKER_HUB_USER_NAME'], 'password' => ENV['DOCKER_HUB_PASSWORD'], 'email' => ENV['DOCKER_HUB_EMAIL'])
         puts response.inspect
       rescue Excon::Errors::SocketError => e
         logger.error e.message
