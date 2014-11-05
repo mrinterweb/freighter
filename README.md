@@ -2,7 +2,7 @@
 
 # Freighter
 
-TODO: Write a gem description
+Freighter's goal is to make it easy to deploy docker containers over ssh. 
 
 ## Installation
 
@@ -20,9 +20,52 @@ Or install it yourself as:
 
     $ gem install freighter
 
+## Configuration
+
+After freighter is installed, run the configuration installer.
+```
+freighter configure
+```
+This copies an example template of a YAML configuration file into ./config/freighter.yml
+
+### Docker REST API
+
+The way that freighter does not require that users have sudo access on the hosts it deploys to is that it interacts with the docker rest api running on the hosts. This means that docker must be configured to expose its REST API on each host.
+
+```
+echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock"' | sudo cat >> /etc/default/docker
+```
+
+The docker service, on the host(s), will need to be restarted.
+
+Running the docker REST API this way should be secure since all communication to the API is over an SSH tunnel, and the REST API is only available locally on the host.
+
+### Authentication
+
+Currently, this gem supports pulling images from hub.docker.com. This means that you must authenticate. 
+It is not recommended to store your personal authentication credentials freighter.yml since that file 
+should be added to source control. Freighter will look for the following environment variables: 
+
+* DOCKER_HUB_USER_NAME
+* DOCKER_HUB_PASSWORD
+* DOCKER_HUB_EMAIL
+
+A recommendation would be to create a file only accessible to your machine's user account that defines these environment variables.
+
+```shell
+export DOCKER_HUB_USER_NAME=<yourDockerHubUserName>
+export DOCKER_HUB_PASSWORD=<yourDockerHubPassword>
+export DOCKER_HUB_EMAIL=<yourDockerHubEmail>
+```
+
 ## Usage
 
-TODO: Write usage instructions here
+For quick reference:
+```
+freighter --help
+```
+
+TODO - Finish writing usage docs.
 
 ## Contributing
 
