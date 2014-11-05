@@ -1,3 +1,5 @@
+require 'docker'
+
 module Freighter
   class Deploy
     attr_reader :logger, :config
@@ -25,9 +27,24 @@ module Freighter
       ssh_options = ssh_options.symbolize_keys
       @environment.fetch('hosts').each do |host|
         ssh = SSH.new(host, ssh_options)
-        ssh.start do |shell|
-          puts shell.exec! 'ls -l'
+        port = 7000
+        ssh.tunneled_proxy(port) do |session|
+          set_docker_url(port)
         end
+      end
+    end
+
+    def set_docker_url(port)
+      Docker.url = "http://localhost:#{port}"
+      # check docker connection
+      begin
+        logger.debug "Requesting docker version"
+        # excon = Excon.new "http://localhost:#{port}"
+        # response = excon.get path: '/containers/json'
+        response = Docker.version
+        puts response.inspect
+      rescue Excon::Errors::SocketError => e
+        logger.error e.message
       end
     end
 

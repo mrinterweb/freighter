@@ -14,6 +14,7 @@ module Freighter
       
       # Do some basic checking to make sure the config file has what we need
       %w[environments connection/type].each { |option| test_config_option option }
+      set_defaults
     end
 
     # recursively tests for keys in a nested hash by separating nested keys with '/'
@@ -31,6 +32,13 @@ module Freighter
           LOGGER.config_error opt_array.join('/')
         end
       end
+    end
+
+    def set_defaults
+      conf = OPTIONS.config
+      conf['connection']['docker'] ||= {}
+      conf['connection']['docker']['socket'] ||= 'unix:///var/run/docker.sock'
+      conf['connection']['docker']['port']   ||= nil
     end
   end
 end
