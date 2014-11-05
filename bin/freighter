@@ -6,7 +6,6 @@ require 'freighter'
 require 'pry'
 
 options = Freighter.options
-logger  = Freighter.logger
 
 if defined?(Rails)
   options.config_path = "#{Rails.root}/config/freighter.yml" 
@@ -15,7 +14,7 @@ else
 end
 
 OptionParser.new do |opts|
-  opts.banner = "Usage: freigter [options] (deploy|configure)"
+  opts.banner = "Usage: freigter [options] (deploy|configure|verify-config)"
 
   opts.on('-e ENV', 'environment * required') do |env|
     options.environment = env
@@ -34,6 +33,7 @@ OptionParser.new do |opts|
   end
 end.parse!
 
+logger  = Freighter.logger
 
 # todo - brush up on nautical jargon to find a better way of saying the freighter is to depart
 logger.info "All hand on deck. Toot toot."
@@ -57,6 +57,9 @@ when "configure"
     logger.info "Edit the file with your configuration."
     logger.info "Please remember to prefer to use ENV vars instead of passwords when editing the configuration."
   end
+when "verify-config"
+  Freighter::Parse.new(options.config_path)
+  logger.info "Your configuration checks out"
 else
   logger.error "unexpected command given: #{ARGV[0]}. See usage. freighter --help"
 end

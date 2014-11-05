@@ -7,10 +7,10 @@ module Freighter
     def initialize
       @logger = ::Logger.new(STDOUT)
       logger.formatter = ->(severity, time, progname, msg) { "#{severity}: #{msg}\n" }
-      logger.level = OPTIONS.verbose ? ::Logger::DEBUG : ::Logger::INFO
     end
 
     def method_missing(meth, *args, &block)
+      logger.level = OPTIONS.verbose ? ::Logger::DEBUG : ::Logger::INFO
       logger.send(meth, *args)
     end
 
