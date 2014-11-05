@@ -1,4 +1,4 @@
-# This gem is not ready yet. Just a gem stub at this point.
+# Freighter is not ready yet. Should be ready in a couple days.
 
 # Freighter
 
@@ -65,7 +65,15 @@ For quick reference:
 freighter --help
 ```
 
-TODO - Finish writing usage docs.
+Example of how to deploy:
+```
+./bin/freighter -e staging deloy
+```
+
+## TODO
+* Write some tests. This has been put off since it is tricky to write tests against remote services.
+* Finish usage documentation
+* Get the gem to a usable state :)
 
 ## Contributing
 
