@@ -25,32 +25,46 @@ module Freighter
       ssh_options = @connection_config.fetch('ssh_options')
       ssh_options.extend Helpers::Hash
       ssh_options = ssh_options.symbolize_keys
+
       @environment.fetch('hosts').each_with_index do |host, i|
-        ssh = SSH.new(host, ssh_options)
-        port = 7000 + i
-        docker_api = DockerRestAPI.new("http://localhost:#{port}")
+        host_name = host.fetch('host')
+        images = host.fetch('images')
 
-        ssh.tunneled_proxy(port) do |session|
-          setup_docker_client(port)
+        ssh = SSH.new(host_name, ssh_options)
+        local_port = 7000 + i
+        # docker_api = DockerRestAPI.new("http://localhost:#{local_port}")
 
-          # pull the latest image
-          # Docker::Image.create 'fromImage' => 'org/image:latest'
-          binding.pry
+        ssh.tunneled_proxy(local_port) do |session|
+          logger.debug "connected to #{host_name}"
+          begin
+            Timeout::timeout(5) do
+              setup_docker_client(local_port)
+            end
+          rescue Timeout::Error
+            ssh.thread.exit
+            logger.error "Could not reach the docker host"
+          end
+
+          images.each do |image|
+            # pull image
+            Docker::Image.create 'fromImage' => image
+          end
         end
       end
     end
 
-    def setup_docker_client(port)
-      Docker.url = "http://localhost:#{port}"
-      
-      # check docker connection
+    def setup_docker_client(local_port)
+      Docker.url = "http://localhost:#{local_port}"
       begin
-        logger.debug "Requesting docker version"
-        # excon = Excon.new "http://localhost:#{port}"
+        # excon = Excon.new "http://localhost:#{local_port}"
         # response = excon.get path: '/containers/json'
+
+        logger.debug "Requesting docker version"
         response = Docker.version
-        Docker.authenticate!('username' => ENV['DOCKER_HUB_USER_NAME'], 'password' => ENV['DOCKER_HUB_PASSWORD'], 'email' => ENV['DOCKER_HUB_EMAIL'])
-        puts response.inspect
+        logger.debug "Docker version: #{response.inspect}"
+        logger.debug "Requesting docker authenticaiton"
+        response = Docker.authenticate!('username' => ENV['DOCKER_HUB_USER_NAME'], 'password' => ENV['DOCKER_HUB_PASSWORD'], 'email' => ENV['DOCKER_HUB_EMAIL'])
+        logger.debug "Docker authentication: #{response.inspect}"
       rescue Excon::Errors::SocketError => e
         logger.error e.message
       end
