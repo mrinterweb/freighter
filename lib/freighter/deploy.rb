@@ -25,11 +25,12 @@ module Freighter
       ssh_options = @connection_config.fetch('ssh_options')
       ssh_options.extend Helpers::Hash
       ssh_options = ssh_options.symbolize_keys
-      @environment.fetch('hosts').each do |host|
+      @environment.fetch('hosts').each_with_index do |host, i|
         ssh = SSH.new(host, ssh_options)
-        port = 7000
+        port = 7000 + i
         ssh.tunneled_proxy(port) do |session|
           set_docker_url(port)
+          binding.pry
         end
       end
     end

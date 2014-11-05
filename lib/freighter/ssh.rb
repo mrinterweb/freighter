@@ -26,11 +26,9 @@ module Freighter
           session.forward.local(local_port, "0.0.0.0", docker_port)
 
           Thread.current.thread_variable_set(:ssh_tunnel_established, true)
-          continue_session = true
-
           int_pressed = false
           trap("INT") { int_pressed = true }
-          session.loop(0.1) { continue_session && !int_pressed }
+          session.loop(0.1) { !int_pressed }
         end
       end
 
@@ -40,6 +38,7 @@ module Freighter
 
       yield
       sleep 0.5
+    ensure
       thread.exit
     end
 
