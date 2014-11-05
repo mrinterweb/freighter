@@ -28,6 +28,8 @@ module Freighter
       @environment.fetch('hosts').each_with_index do |host, i|
         ssh = SSH.new(host, ssh_options)
         port = 7000 + i
+        docker_api = DockerRestAPI.new("http://localhost:#{port}")
+
         ssh.tunneled_proxy(port) do |session|
           set_docker_url(port)
           binding.pry
