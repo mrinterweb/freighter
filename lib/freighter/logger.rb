@@ -1,4 +1,5 @@
 require 'logger'
+require 'pry'
 
 module Freighter
   class Logger
