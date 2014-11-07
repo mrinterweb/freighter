@@ -13,9 +13,13 @@ environments:
     hosts:
       - host: staging.example.com
         images:
-          - organization/imageName:latest
+          - name: organization/imageName:latest
+            port_mappings: 
+              - 80/80
   production:
     hosts:
       - host: example.com
         images:
-          - organization/imageName:latest
+          - name: organization/imageName:latest
+            port_mappings: 
+              - 80/80

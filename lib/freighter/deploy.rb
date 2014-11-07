@@ -35,40 +35,85 @@ module Freighter
         # docker_api = DockerRestAPI.new("http://localhost:#{local_port}")
 
         ssh.tunneled_proxy(local_port) do |session|
-          logger.debug "connected to #{host_name}"
+          msg = ->(m) { "#{host_name}: #{m}" } 
+
+          logger.debug msg["Connected"]
           begin
+            # The timeout is needed in the case that we are unable to communicate with the docker REST API
             Timeout::timeout(5) do
               setup_docker_client(local_port)
             end
           rescue Timeout::Error
             ssh.thread.exit
-            logger.error "Could not reach the docker host"
+            logger.error msg["Could not reach the docker REST API"]
           end
 
+          
           images.each do |image|
+            image_name = image['name']
             # pull image
-            Docker::Image.create 'fromImage' => image
+            logger.info msg["Pulling image: #{image_name}"]
+            pull_response = Docker::Image.create 'fromImage' => image_name
+
+            # find existing images on the machine
+            image_ids = Docker::Image.all.select do |img|
+              img.info['RepoTags'].member?(image_name)
+            end.map { |img| img.id[0...12] }
+
+            logger.info msg["Existing image(s) found #{image_ids.join(', ')}"]
+
+            # determine if a the latest version of the image is currently running
+            matching_containers = containers_matching_port_map(Docker::Container.all, image['port_mappings'])
+            if image_ids.member?(pull_response.id) && !matching_containers.empty?
+              logger.info msg["Container already running with the latest image: #{pull_response.id}"]
+            else 
+              # stop previous container and start up a new container with the latest image
+              update_containers matching_containers, image
+            end
+            binding.pry
           end
         end
       end
     end
 
-    def setup_docker_client(local_port)
-      Docker.url = "http://localhost:#{local_port}"
-      begin
-        # excon = Excon.new "http://localhost:#{local_port}"
-        # response = excon.get path: '/containers/json'
+    private
 
-        logger.debug "Requesting docker version"
-        response = Docker.version
-        logger.debug "Docker version: #{response.inspect}"
-        logger.debug "Requesting docker authenticaiton"
-        response = Docker.authenticate!('username' => ENV['DOCKER_HUB_USER_NAME'], 'password' => ENV['DOCKER_HUB_PASSWORD'], 'email' => ENV['DOCKER_HUB_EMAIL'])
-        logger.debug "Docker authentication: #{response.inspect}"
-      rescue Excon::Errors::SocketError => e
-        logger.error e.message
+      # Sets up the Docker gem by setting the local URL and authenticating to the host's REST API
+      def setup_docker_client(local_port)
+        Docker.url = "http://localhost:#{local_port}"
+        begin
+          logger.debug "Requesting docker version"
+          response = Docker.version
+          logger.debug "Docker version: #{response.inspect}"
+          logger.debug "Requesting docker authenticaiton"
+          response = Docker.authenticate!('username' => ENV['DOCKER_HUB_USER_NAME'], 'password' => ENV['DOCKER_HUB_PASSWORD'], 'email' => ENV['DOCKER_HUB_EMAIL'])
+          logger.debug "Docker authentication: #{response.inspect}"
+        rescue Excon::Errors::SocketError => e
+          logger.error e.message
+        end
       end
-    end
+
+      def containers_matching_port_map(containers, port_mappings)
+        port_mappings.map do |port_map|
+          ports = ports(port_map)
+          containers.select do |c|
+            c.info['Ports'].detect do |p|
+              p['PrivatePort'] == ports.private && p['PublicPort'] == ports.public
+            end
+          end
+        end.flatten
+      end
+
+      PortMap = Struct.new(:private, :public)
+      def ports(port_map)
+        PortMap.new(*port_map.split('/').map(&:to_i))
+      end
+
+      def update_containers containers, image
+        containers.each do |container|
+          # todo - finish this
+        end
+      end
 
   end
 end
