@@ -5,3 +5,10 @@ gemspec
 
 gem 'net-ssh'
 gem 'docker-api'
+
+group :test do
+  gem 'rspec'
+  gem 'vcr'
+  gem 'pry'
+  gem 'pry-nav'
+end
