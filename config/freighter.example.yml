@@ -15,11 +15,11 @@ environments:
         images:
           - name: organization/imageName:latest
             port_mappings: 
-              - 80/80
+              - 0.0.0.0:80->80
   production:
     hosts:
       - host: example.com
         images:
           - name: organization/imageName:latest
             port_mappings: 
-              - 80/80
+              - 0.0.0.0:80->80
