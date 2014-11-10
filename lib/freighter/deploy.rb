@@ -52,8 +52,13 @@ module Freighter
           images.each do |image|
             image_name = image['name']
             # pull image
-            logger.info msg["Pulling image: #{image_name}"]
-            pull_response = Docker::Image.create 'fromImage' => image_name
+            if OPTIONS.pull_image
+              logger.info msg["Pulling image: #{image_name}"] 
+              pull_response = Docker::Image.create 'fromImage' => image_name
+            else
+              logger.info msg["Skip pull image"]
+              logger.error msg["Skipping is not yet implemented. Please run again without the --no-pull option"]
+            end
 
             # find existing images on the machine
             image_ids = Docker::Image.all.select do |img|
@@ -63,7 +68,7 @@ module Freighter
             logger.info msg["Existing image(s) found #{image_ids.join(', ')}"]
 
             # determine if a the latest version of the image is currently running
-            matching_containers = containers_matching_port_map(Docker::Container.all, image['port_mappings'])
+            matching_containers = containers_matching_port_map(Docker::Container.all, image['containers'].map { |c| c['port_mapping'] })
             if image_ids.member?(pull_response.id) && !matching_containers.empty?
               logger.info msg["Container already running with the latest image: #{pull_response.id}"]
             else 
@@ -111,7 +116,7 @@ module Freighter
           raise if $2.nil? or $3.nil?
           PortMap.new($1, $2.to_i, $3.to_i)
         rescue
-          raise "port_mappings needs to be in the format of <ip-address>:<host-port-number>-><container-port-number>"
+          raise "port_mappings needs to be in the format of <ip-address>:<host-port-number>-><container-port-number>. received: #{port_map}"
         end
       end
 
@@ -130,16 +135,25 @@ module Freighter
         end.join
 
         # start up some new containers
-        image['port_mappings'].map { |pm| ports(pm) }.map do |port_map|
-          # Thread.new do
-            # 0.0.0.0:80->80/tcp
-            new_container = Docker::Container.create("Image" => image['name'], "ExposedPorts" => { "#{port_map.container}/tcp" => {} })
-            logger.info "Starting container with port_mapping: host #{port_map.host}, container #{port_map.container}"
-            new_container.start("PortBindings" => { "#{port_map.container}/tcp" => [{ "HostPort" => port_map.host }] })
-            new_container.wait()
-            logger.info "New container started with id: #{new_container.id}"
-            totals[:started] += 1
-          # end
+        image['containers'].map do |container|
+          port_map = ports(container['port_mapping'])
+
+          # env = container['env'].inject("") { |r, (k,v)| r << "#{k}='#{v}',\n" }
+          env = container['env'].map { |k,v| "#{k}=#{v}" }
+          container_options = {
+            "Image" => image['name'],
+            "ExposedPorts" => { "#{port_map.container}/tcp" => {} },
+            "Env" => env
+          }
+
+          new_container = Docker::Container.create container_options
+          logger.info "Starting container with port_mapping: host #{[port_map.ip, port_map.host].join(':')}, container #{port_map.container}"
+          new_container.start(
+            "PortBindings" => { "#{port_map.container}/tcp" => [{ "HostPort" => port_map.host.to_s, "HostIp" => port_map.ip }] }
+          )
+          new_container.wait()
+          logger.info "New container started with id: #{new_container.id}"
+          totals[:started] += 1
         end
         
         totals

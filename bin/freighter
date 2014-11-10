@@ -31,6 +31,10 @@ OptionParser.new do |opts|
       options.config_path = "#{Rails.root}/config/freighter.yml"
     end
   end
+
+  opts.on('--no-pull', 'specify if you do not wish to pull the image') do
+    options.pull_image = false
+  end
 end.parse!
 
 logger  = Freighter.logger

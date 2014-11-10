@@ -39,6 +39,7 @@ module Freighter
       conf['connection']['docker'] ||= {}
       conf['connection']['docker']['socket'] ||= 'unix:///var/run/docker.sock'
       conf['connection']['docker']['port']   ||= nil
+      OPTIONS.pull_image = true if OPTIONS.pull_image.nil?
     end
   end
 end
