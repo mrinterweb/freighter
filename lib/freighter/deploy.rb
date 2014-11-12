@@ -74,7 +74,10 @@ module Freighter
             else 
               # stop previous container and start up a new container with the latest image
               results = update_containers matching_containers, image
-              binding.pry
+              logger.info msg["Finished:"]
+              logger.info msg["  started: #{results[:started]}"]
+              logger.info msg["  stopped: #{results[:stopped]}"]
+              logger.info msg["  started container ids: #{results[:container_ids_started]}"]
             end
           end
         end
@@ -121,7 +124,7 @@ module Freighter
       end
 
       def update_containers existing_containers=[], image
-        totals = { stopped: 0, started: 0 }
+        totals = { stopped: 0, started: 0, container_ids_started: [] }
         # stop the existing matching containers
         existing_containers.map do |container|
           Thread.new do
@@ -151,7 +154,7 @@ module Freighter
           new_container.start(
             "PortBindings" => { "#{port_map.container}/tcp" => [{ "HostPort" => port_map.host.to_s, "HostIp" => port_map.ip }] }
           )
-          new_container.wait()
+          totals[:container_ids_started] << new_container.id
           logger.info "New container started with id: #{new_container.id}"
           totals[:started] += 1
         end
