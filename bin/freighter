@@ -32,20 +32,35 @@ OptionParser.new do |opts|
     end
   end
 
-  opts.on('--no-pull', 'specify if you do not wish to pull the image') do
-    options.pull_image = false
+  opts.on('-a', '--app', 'The name of the app to deploy') do |app_name|
+    options.app_name = app_name
   end
+
+  opts.on('--all', 'Deploy all apps for the environment') do
+    raise "Can not use options --app and --all as they conflict" if options.app_name
+    options.deploy_all = true
+  end
+
+  # This option is not yet implemented because the docker REST api is not the best at searching available images
+  # opts.on('--no-pull', 'specify if you do not wish to pull the image') do
+  #   options.pull_image = false
+  # end
 end.parse!
 
 logger  = Freighter.logger
 
 # todo - brush up on nautical jargon to find a better way of saying the freighter is to depart
 logger.info "All hand on deck. Toot toot."
-logger.debug "app is chatty"
 
 case ARGV[0]
 when "deploy"
-  logger.error "Must specify an environment with the -e option" unless options.environment
+  unless options.environment
+    logger.error "Must specify an environment with the -e option" 
+  end
+  # check to see if the container name is specified or all containers should be deployed
+  unless (options.app_name || options.deploy_all)
+    logger.error "Must specify either container(s) with --app or --all option" 
+  end
   Freighter::Deploy.new
 when "configure"
   if File.exist?('./config/freighter.yml')
@@ -62,7 +77,7 @@ when "configure"
     logger.info "Please remember to prefer to use ENV vars instead of passwords when editing the configuration."
   end
 when "verify-config"
-  Freighter::Parse.new(options.config_path)
+  Freighter::Parser.new(options.config_path)
   logger.info "Your configuration checks out"
 else
   logger.error "unexpected command given: #{ARGV[0]}. See usage. freighter --help"

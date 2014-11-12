@@ -5,7 +5,7 @@ module Freighter
     attr_reader :logger, :config
 
     def initialize
-      Parse.new OPTIONS.config_path
+      @parser = Parser.new OPTIONS.config_path
       @logger = LOGGER
       @config = OPTIONS.config
       @connection_config = @config.fetch('connection')

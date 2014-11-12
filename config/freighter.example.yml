@@ -1,3 +1,7 @@
+# Please use the examples in this file as a starting place for your own configuration.
+# This file should contain all the information needed to deploy with freighter,
+# aside from environment variables: DOCKER_HUB_USER_NAME, DOCKER_HUB_PASSWORD, DOCKER_HUB_EMAIL
+
 connection:
   type: ssh
   ssh_options:
@@ -14,12 +18,41 @@ environments:
       - host: staging.example.com
         images:
           - name: organization/imageName:latest
-            port_mappings: 
-              - 0.0.0.0:80->80
+            containers:
+              - name: app
+                port_mapping: 0.0.0.0:80->80
+                env:
+                  DB_USERNAME: fooBar
+                  DB_PASSWORD: My53cr37
+
+  # a more complex example for production showing a way to reduce redundancy
   production:
+    shared_env: &shared_app_env
+      DB_USERNAME: fooBar
+      DB_PASSWORD: My53cr37
     hosts:
-      - host: example.com
+      - host: prod1.example.com
         images:
           - name: organization/imageName:latest
-            port_mappings: 
-              - 0.0.0.0:80->80
+            containers:
+              - name: app
+                port_mapping: 0.0.0.0:80->80
+                env:
+                  <<: *shared_app_env
+                  ADDITIONAL_VAR: someValue
+          - name: organization/otherImage:latest
+            containers:
+              - name: otherApp
+                port_mapping: 0.0.0.0:2000->80
+                env:
+                  <<: *shared_app_env
+      - host: prod2.example.com
+        images:
+          - name: organization/imageName:latest
+            containers:
+              - name: organization/otherImage:latest
+                containers:
+                  - name: otherApp
+                    port_mapping: 0.0.0.0:2000->80
+                    env:
+                      <<: *shared_app_env
