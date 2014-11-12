@@ -20,7 +20,7 @@ OptionParser.new do |opts|
     options.environment = env
   end
 
-  opts.on('-v', '--verbose', 'verbose logging') do |v|
+  opts.on('-v', '--verbose', 'verbose logging') do
     options.verbose = true
   end
 
@@ -32,7 +32,7 @@ OptionParser.new do |opts|
     end
   end
 
-  opts.on('-a', '--app', 'The name of the app to deploy') do |app_name|
+  opts.on('-a', '--app APP_NAME', 'The name of the app to deploy') do |app_name|
     options.app_name = app_name
   end
 

@@ -28,7 +28,7 @@ module Freighter
 
       @environment.fetch('hosts').each_with_index do |host, i|
         host_name = host.fetch('host')
-        images = host.fetch('images')
+        images = @parser.images(host_name)
 
         ssh = SSH.new(host_name, ssh_options)
         local_port = 7000 + i
