@@ -1,22 +1,18 @@
 # Freighter
 
-Freighter's goal is to make it easy to deploy docker containers over ssh. 
+Freighter's goal is to make it easy to deploy docker containers over ssh. Freighter uses one YAML file to describe the environments, servers, images, and containers in your environment.
+
+Freighter goals:
+* Simple docker container deployment
+* Straight forward configuration
+* Users new to freighter should be able to deploy in minutes
+* Minimal server-side configuration
+* Fast and reliable
 
 ## Installation
+Freighter is a ruby gem and requires ruby 1.9 or higher.
 
-Add this line to your application's Gemfile:
-
-```ruby
-gem 'freighter'
-```
-
-And then execute:
-
-    $ bundle
-
-Or install it yourself as:
-
-    $ gem install freighter
+    gem install freighter
 
 ## Configuration
 
@@ -41,8 +37,8 @@ Running the docker REST API this way should be secure since all communication to
 ### Authentication
 
 Currently, this gem supports pulling images from hub.docker.com. This means that you must authenticate. 
-It is not recommended to store your personal authentication credentials freighter.yml since that file 
-should be added to source control. Freighter will look for the following environment variables: 
+It is not recommended to store your personal authentication credentials in freighter.yml since that file 
+should be added to source control. Freighter needs the following environment variables set on your local machine:
 
 * DOCKER_HUB_USER_NAME
 * DOCKER_HUB_PASSWORD
@@ -65,8 +61,19 @@ freighter --help
 
 Example of how to deploy:
 ```
-./bin/freighter -e staging deloy
+freighter -e staging --all deloy
 ```
+
+If you want to deploy one app:
+```
+freighter -e staging --app my_app deploy
+```
+
+The apps are defined in freighter.yml.
+
+## freighter.yml
+
+When you run `freighter configure` it will copy an example freighter.yml file that you can use as a template. The structure of the YAML file is important. More documentation on configuration to come.
 
 ## Fun facts
 
