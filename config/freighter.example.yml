@@ -50,9 +50,7 @@ environments:
         images:
           - name: organization/imageName:latest
             containers:
-              - name: organization/otherImage:latest
-                containers:
-                  - name: otherApp
-                    port_mapping: 0.0.0.0:2000->80
-                    env:
-                      <<: *shared_app_env
+              - name: otherApp
+                port_mapping: 0.0.0.0:2000->80
+                env:
+                  <<: *shared_app_env

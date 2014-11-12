@@ -8,7 +8,7 @@ module Freighter
       begin
         @config = opts.config = YAML.load_file(config_path)
         LOGGER.debug "config file parsed"
-      rescue Errno::ENOENT => e
+      rescue Errno::ENOENT, Psych::SyntaxError => e
         LOGGER.error "Error parsing freighter config file.\n  path: #{config_path}\n  #{e}"
       rescue
         LOGGER.error "There is something wrong with the path to your yaml config file: #{config_path}\n  #{$!.message}"
