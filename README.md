@@ -32,7 +32,7 @@ echo 'DOCKER_OPTS="-H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock"' | su
 
 The docker service, on the host(s), will need to be restarted.
 
-Running the docker REST API this way should be secure since all communication to the API is over an SSH tunnel, and the REST API is only available locally on the host.
+Running the docker REST API this way should be secure since all communication to the API is over an SSH tunnel, and the docker REST API should only be available locally on the host.
 
 ### Authentication
 
