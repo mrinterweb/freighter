@@ -5,9 +5,10 @@
 connection:
   type: ssh
   ssh_options:
-    user_name: user name on host
-    keys:
-      - "~/.config/id_rsa"
+    config: true
+    # user_name: user name on host
+    # keys:
+    #   - "~/.config/id_rsa"
 
 docker:
   port: 2375

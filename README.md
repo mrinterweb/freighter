@@ -80,9 +80,10 @@ Here is what part of the example freighter YAML configuration looks like:
 connection:
   type: ssh
   ssh_options:
-    user_name: user name on host
-    keys:
-      - "~/.config/id_rsa"
+    config: true
+    # user_name: user name on host
+    # keys:
+    #  - "~/.config/id_rsa"
 
 docker:
   port: 2375
@@ -106,11 +107,16 @@ Breaking this example down:
 connection:
   type: ssh
   ssh_options:
-    user_name: user name on host
-    keys:
-      - "~/.config/id_rsa"
+    config: true
+    # user_name: user name on host
+    # keys:
+    #  - "~/.config/id_rsa"
 ```
-This specifies the connection used to connect to the host servers. Currently, SSH via key based authentication is the only method supported. In order to deploy, you'll need to be able to SSH into all host server you are attempting to deploy to. More connection options may be provided in the future. 
+This specifies the connection used to connect to the host servers. Currently, SSH via key based authentication is the only method supported. In order to deploy, you'll need to be able to SSH into all host server you are attempting to deploy to. More connection options may be provided in the future.
+
+There are many ssh_options available. See the following documented here: http://net-ssh.github.io/net-ssh/ (for the "start" method's options). One additional options is "user_name" that was added. You can also use the "--user" option when running freighter to override the user_name in the freighter.yml. For the most simple and flexible configuraiton, use the `config: true` option and that will load your ~/.ssh/config, /etc/ssh_config files to determine how to connect to the hosts.
+
+If more than one user uses freighter to deploy, specifying the user_name in the freighter.yml is not recommended. Use the `config: true` option or the `--user` flag option.
 
 ```YAML
 docker:

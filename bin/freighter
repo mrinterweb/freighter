@@ -41,6 +41,10 @@ OptionParser.new do |opts|
     options.deploy_all = true
   end
 
+  opts.on('--user SSH_USER', 'User name used for the SSH connection. (optional depending on your configuration)') do |user|
+    options.ssh_user = user
+  end
+
   # This option is not yet implemented because the docker REST api is not the best at searching available images
   # opts.on('--no-pull', 'specify if you do not wish to pull the image') do
   #   options.pull_image = false

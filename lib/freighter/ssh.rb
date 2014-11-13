@@ -7,8 +7,8 @@ module Freighter
 
     def initialize(host, ssh_conf)
       @host = host
-      @user = ssh_conf.fetch(:user_name)
-      ssh_conf.delete(:user_name)
+      user_name = ssh_conf.delete([:user_name])
+      @user = OPTIONS.ssh_user || user_name
       @ssh_options = ssh_conf
     end
 
