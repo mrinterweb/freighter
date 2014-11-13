@@ -7,6 +7,7 @@ Freighter goals:
 * Straight forward configuration
 * Users new to freighter should be able to deploy in minutes
 * Minimal server-side configuration
+* Clean up old containers and images that are not being used
 * Fast and reliable
 
 ## Installation
