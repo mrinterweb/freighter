@@ -69,10 +69,22 @@ module Freighter
 
             # determine if a the latest version of the image is currently running
             matching_containers = containers_matching_port_map(Docker::Container.all, image['containers'].map { |c| c['port_mapping'] })
-            if image_ids.member?(pull_response.id) && !matching_containers.empty?
+
+            # stop previous container and start up a new container with the latest image
+            stopped_containers = []
+            current_running_containers = []
+            matching_containers.each do |container|
+              if pull_response.id =~ /^#{container.info['Image']}/
+                current_running_containers << container
+              else
+                Docker::Container.get(container.id).stop
+                stopped_containers << container
+              end
+            end
+            if !current_running_containers.empty? and stopped_containers.empty?
               logger.info msg["Container already running with the latest image: #{pull_response.id}"]
             else 
-              # stop previous container and start up a new container with the latest image
+              logger.info msg["Stopped containers: #{stopped_containers.map(&:info).map(&:to_json)}"]
               results = update_containers matching_containers, image
               logger.info msg["Finished:"]
               logger.info msg["  started: #{results[:started]}"]
