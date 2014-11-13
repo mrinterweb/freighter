@@ -127,17 +127,21 @@ module Freighter
 
       def containers_matching_port_map(containers, port_mappings)
         port_mappings.map do |port_map|
-          ports = ports(port_map)
+          ports = map_ports(port_map)
           containers.select do |c|
             c.info['Ports'].detect do |p|
               p['PrivatePort'] == ports.container && p['PublicPort'] == ports.host
             end
           end
-        end.flatten
+        end.compact.flatten
       end
 
       PortMap = Struct.new(:ip, :host, :container)
-      def ports(port_map)
+      def map_ports(port_map)
+        # for some unknown reason, containers started without a port mapping specified
+        # are getting a default port mapping of 80/tcp. This is why a default port map is 
+        # being assigned to port 80
+        return PortMap.new(nil, nil, 80) if port_map.nil?
         port_map.match(/^(\d{1,3}\.[\.0-9]*)?:?(\d+)->(\d+)$/)
         begin
           raise if $2.nil? or $3.nil?
@@ -163,21 +167,30 @@ module Freighter
 
         # start up some new containers
         image['containers'].map do |container|
-          port_map = ports(container['port_mapping'])
+          port_map = map_ports(container['port_mapping'])
 
           # env = container['env'].inject("") { |r, (k,v)| r << "#{k}='#{v}',\n" }
           env = container['env'].map { |k,v| "#{k}=#{v}" }
           container_options = {
             "Image" => image['name'],
-            "ExposedPorts" => { "#{port_map.container}/tcp" => {} },
             "Env" => env
           }
 
+          start_options = {}
+
+          if port_map.host
+            container_options.merge!({ "ExposedPorts" => { "#{port_map.container}/tcp" => {} } })
+            start_options.merge!({
+              "PortBindings" => {
+                "#{port_map.container}/tcp" => [{ "HostPort" => port_map.host.to_s, "HostIp" => port_map.ip }]
+              }
+            })
+            logger.info msg "Starting container with port_mapping: host #{[port_map.ip, port_map.host].join(':')}, container #{port_map.container}"
+          end
+
           new_container = Docker::Container.create container_options
-          logger.info msg "Starting container with port_mapping: host #{[port_map.ip, port_map.host].join(':')}, container #{port_map.container}"
-          new_container.start(
-            "PortBindings" => { "#{port_map.container}/tcp" => [{ "HostPort" => port_map.host.to_s, "HostIp" => port_map.ip }] }
-          )
+
+          new_container.start start_options
           totals[:container_ids_started] << new_container.id
           logger.info msg "New container started with id: #{new_container.id}"
           totals[:started] += 1
