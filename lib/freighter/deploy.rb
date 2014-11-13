@@ -1,8 +1,10 @@
 require 'docker'
+require 'thread'
+require 'thwait'
 
 module Freighter
   class Deploy
-    attr_reader :logger, :config
+    attr_reader :logger, :config 
 
     def initialize
       @parser = Parser.new OPTIONS.config_path
@@ -28,6 +30,7 @@ module Freighter
 
       @environment.fetch('hosts').each_with_index do |host, i|
         host_name = host.fetch('host')
+        @current_host_name = host_name
         images = @parser.images(host_name)
 
         ssh = SSH.new(host_name, ssh_options)
@@ -35,9 +38,8 @@ module Freighter
         # docker_api = DockerRestAPI.new("http://localhost:#{local_port}")
 
         ssh.tunneled_proxy(local_port) do |session|
-          msg = ->(m) { "#{host_name}: #{m}" } 
 
-          logger.debug msg["Connected"]
+          logger.debug msg "Connected"
           begin
             # The timeout is needed in the case that we are unable to communicate with the docker REST API
             Timeout::timeout(5) do
@@ -45,7 +47,7 @@ module Freighter
             end
           rescue Timeout::Error
             ssh.thread.exit
-            logger.error msg["Could not reach the docker REST API"]
+            logger.error msg "Could not reach the docker REST API"
           end
 
           
@@ -53,11 +55,11 @@ module Freighter
             image_name = image['name']
             # pull image
             if OPTIONS.pull_image
-              logger.info msg["Pulling image: #{image_name}"] 
+              logger.info msg "Pulling image: #{image_name}" 
               pull_response = Docker::Image.create 'fromImage' => image_name
             else
-              logger.info msg["Skip pull image"]
-              logger.error msg["Skipping is not yet implemented. Please run again without the --no-pull option"]
+              logger.info msg "Skip pull image"
+              logger.error msg "Skipping is not yet implemented. Please run again without the --no-pull option"
             end
 
             # find existing images on the machine
@@ -65,7 +67,7 @@ module Freighter
               img.info['RepoTags'].member?(image_name)
             end.map { |img| img.id[0...12] }
 
-            logger.info msg["Existing image(s) found #{image_ids.join(', ')}"]
+            logger.info msg "Existing image(s) found #{image_ids.join(', ')}"
 
             # determine if a the latest version of the image is currently running
             matching_containers = containers_matching_port_map(Docker::Container.all, image['containers'].map { |c| c['port_mapping'] })
@@ -82,14 +84,19 @@ module Freighter
               end
             end
             if !current_running_containers.empty? and stopped_containers.empty?
-              logger.info msg["Container already running with the latest image: #{pull_response.id}"]
+              logger.info msg "Container already running with the latest image: #{pull_response.id}"
             else 
-              logger.info msg["Stopped containers: #{stopped_containers.map(&:info).map(&:to_json)}"]
+              logger.info msg "Stopped containers: #{stopped_containers.map(&:info).map(&:to_json)}"
               results = update_containers matching_containers, image
-              logger.info msg["Finished:"]
-              logger.info msg["  started: #{results[:started]}"]
-              logger.info msg["  stopped: #{results[:stopped]}"]
-              logger.info msg["  started container ids: #{results[:container_ids_started]}"]
+              logger.info msg "Finished:"
+              logger.info msg "  started: #{results[:started]}"
+              logger.info msg "  stopped: #{results[:stopped]}"
+              logger.info msg "  started container ids: #{results[:container_ids_started]}"
+              
+              # cleanup old containers
+              cleanup_old_containers
+              # cleanup unused/outdated images
+              cleanup_dangling_images
             end
           end
         end
@@ -97,6 +104,11 @@ module Freighter
     end
 
     private
+
+      # Used for logging to prefix log messages with the current host
+      def msg(message)
+        "#{@current_host_name}: #{message}"
+      end
 
       # Sets up the Docker gem by setting the local URL and authenticating to the host's REST API
       def setup_docker_client(local_port)
@@ -135,16 +147,16 @@ module Freighter
         end
       end
 
-      def update_containers existing_containers=[], image
+      def update_containers(existing_containers=[], image)
         totals = { stopped: 0, started: 0, container_ids_started: [] }
         # stop the existing matching containers
         existing_containers.map do |container|
           Thread.new do
             existing_container = Docker::Container.get(container.id)
-            logger.info "Stopping container: #{contianer.id}"
+            logger.info msg "Stopping container: #{contianer.id}"
             existing_container.stop
             existing_container.wait()
-            logger.info "Container stopped (#{container.id}"
+            logger.info msg "Container stopped (#{container.id}"
             totals[:stopped] += 1
           end
         end.join
@@ -162,16 +174,45 @@ module Freighter
           }
 
           new_container = Docker::Container.create container_options
-          logger.info "Starting container with port_mapping: host #{[port_map.ip, port_map.host].join(':')}, container #{port_map.container}"
+          logger.info msg "Starting container with port_mapping: host #{[port_map.ip, port_map.host].join(':')}, container #{port_map.container}"
           new_container.start(
             "PortBindings" => { "#{port_map.container}/tcp" => [{ "HostPort" => port_map.host.to_s, "HostIp" => port_map.ip }] }
           )
           totals[:container_ids_started] << new_container.id
-          logger.info "New container started with id: #{new_container.id}"
+          logger.info msg "New container started with id: #{new_container.id}"
           totals[:started] += 1
         end
         
         totals
+      end
+
+      # cleans up all exited containers
+      def cleanup_old_containers
+        thread_pool = []
+        Docker::Container.all(all: true).select { |c| c.info['Status'] =~ /^Exited/ }.each do |container|
+          thread_pool << Thread.new do
+            logger.info msg "Removing container: #{container.info.to_json}"
+            container.remove
+          end
+        end
+        if thread_pool.empty?
+          logger.info msg "No containers need to be cleaned up"
+        else
+          logger.info msg "Waiting for old containers to be cleaned up"
+          ThreadsWait.all_waits(*thread_pool)
+        end
+      end
+
+      def cleanup_dangling_images
+        thread_pool = []
+        Docker::Image.all(filters: '{"dangling":["true"]}').each do |image|
+          thread_pool << Thread.new do
+            image.remove
+            logger.info msg "Removed image: #{image.info.to_json}"
+          end
+        end
+        logger.info msg "Waiting for dangling images to be cleaned up"
+        ThreadsWait.all_waits(*thread_pool)
       end
 
   end
