@@ -177,15 +177,12 @@ If you find yourself in a pickle of not being able to Ctrl+c (interrupt) the com
 
 # Status
 
+Freighter is currently deploying quickly and reliably as far as I can tell.
+
 Needed:
 * Needs more testing with more complex scenarios
-
-Nice to haves:
 * Container linking options
 * Volume mounting options
-* Container cleanup
-
-Freighter is currently deploying quickly and reliably as far as I can tell.
 
 ## Contributing
 
