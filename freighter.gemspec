@@ -8,8 +8,8 @@ Gem::Specification.new do |spec|
   spec.version       = Freighter::VERSION
   spec.authors       = ["Sean McCleary"]
   spec.email         = ["seanmcc@gmail.com"]
-  spec.summary       = %q{Ruby gem to deploy docker containers}
-  spec.description   = %q{Ruby gem to deploy docker containers}
+  spec.summary       = %q{Easily deploy docker containers via SSH}
+  spec.description   = %q{Easily deploy docker containers via SSH}
   spec.homepage      = "https://github.com/mrinterweb/freighter"
   spec.license       = "MIT"
 
