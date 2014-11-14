@@ -31,27 +31,30 @@ environments:
     shared_env: &shared_app_env
       DB_USERNAME: fooBar
       DB_PASSWORD: My53cr37
+
+    one_image: &one_image
+      name: organization/imageName:latest
+      containers:
+        - name: app
+          port_mapping: 0.0.0.0:80->80
+          env:
+            <<: *shared_app_env
+            ADDITIONAL_VAR: someValue
+
+    some_other_image: &other_image
+      name: organization/otherImage:latest
+      containers:
+        - name: otherApp
+          port_mapping: 0.0.0.0:2000->80
+          env:
+            <<: *shared_app_env
+
     hosts:
       - host: prod1.example.com
         images:
-          - name: organization/imageName:latest
-            containers:
-              - name: app
-                port_mapping: 0.0.0.0:80->80
-                env:
-                  <<: *shared_app_env
-                  ADDITIONAL_VAR: someValue
-          - name: organization/otherImage:latest
-            containers:
-              - name: otherApp
-                port_mapping: 0.0.0.0:2000->80
-                env:
-                  <<: *shared_app_env
+          - *one_image
+          - *other_image
       - host: prod2.example.com
         images:
-          - name: organization/imageName:latest
-            containers:
-              - name: otherApp
-                port_mapping: 0.0.0.0:2000->80
-                env:
-                  <<: *shared_app_env
+          - *one_image
+          - *other_image
