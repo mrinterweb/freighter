@@ -62,7 +62,7 @@ freighter --help
 
 Example of how to deploy:
 ```
-freighter -e staging --all deloy
+freighter -e staging --all deploy
 ```
 
 If you want to deploy one app:
