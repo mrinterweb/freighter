@@ -16,7 +16,7 @@ describe Freighter::Deploy do
 
       it "should match port mapping with IP address" do
         mapping = "0.0.0.0:80->90"
-        port_map = subject.send(:ports, mapping)
+        port_map = subject.send(:map_ports, mapping)
         expect(port_map.ip).to eq "0.0.0.0"
         expect(port_map.host).to eq 80
         expect(port_map.container).to eq 90
@@ -24,7 +24,7 @@ describe Freighter::Deploy do
 
       it "should be able to accept a mapping without an IP address" do
         mapping = "80->90"
-        port_map = subject.send(:ports, mapping)
+        port_map = subject.send(:map_ports, mapping)
         expect(port_map.ip).to be_nil
         expect(port_map.host).to eq 80
         expect(port_map.container).to eq 90
