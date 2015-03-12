@@ -4,7 +4,7 @@ require 'thwait'
 
 module Freighter
   class Deploy
-    attr_reader :logger, :config 
+    attr_reader :logger, :config
 
     def initialize
       @parser = Parser.new OPTIONS.config_path
@@ -113,6 +113,7 @@ module Freighter
       # Sets up the Docker gem by setting the local URL and authenticating to the host's REST API
       def setup_docker_client(local_port)
         Docker.url = "http://localhost:#{local_port}"
+        Docker.connection.options[:scheme] = 'http'
         begin
           logger.debug "Requesting docker version"
           response = Docker.version
@@ -121,7 +122,9 @@ module Freighter
           response = Docker.authenticate!('username' => ENV['DOCKER_HUB_USER_NAME'], 'password' => ENV['DOCKER_HUB_PASSWORD'], 'email' => ENV['DOCKER_HUB_EMAIL'])
           logger.debug "Docker authentication: #{response.inspect}"
         rescue Excon::Errors::SocketError => e
-          logger.error e.message
+          abort e.message
+        rescue Exception => e
+          abort e.message
         end
       end
 
