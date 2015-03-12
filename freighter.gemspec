@@ -19,7 +19,8 @@ Gem::Specification.new do |spec|
   spec.require_paths = ["lib"]
 
   spec.add_dependency "net-ssh", "~> 2.9"
-  spec.add_dependency "docker-api", "1.20"
+  spec.add_dependency "docker-api", "~> 1.20"
+  spec.add_dependency "excon", "~> 0.44"
 
   spec.add_development_dependency "bundler", "~> 1.7"
   spec.add_development_dependency "rake", "~> 10.0"
