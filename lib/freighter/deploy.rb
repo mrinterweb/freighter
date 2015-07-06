@@ -13,14 +13,8 @@ module Freighter
       @connection_config = @config.fetch('connection')
       environments = @config.fetch('environments')
       @environment = environments.fetch(OPTIONS.environment) rescue logger.config_error("environments/#{OPTIONS.environment}")
-
       connection_type = @connection_config['type']
-      case connection_type
-      when 'ssh'
-        deploy_with_ssh
-      else
-        logger.error "Unknown configuration option for type: #{connection_type}"
-      end
+      logger.error "Unknown configuration option for type: #{connection_type}" if connection_type != 'ssh'
     end
 
     def deploy_with_ssh

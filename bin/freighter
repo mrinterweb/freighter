@@ -70,7 +70,7 @@ when "deploy"
   unless (options.app_name || options.deploy_all)
     logger.error "Must specify either container(s) with --app or --all option" 
   end
-  Freighter::Deploy.new
+  Freighter::Deploy.new.deploy_with_ssh
 when "configure"
   if File.exist?('./config/freighter.yml')
     logger.info "./config/freighter.yml already exists"
